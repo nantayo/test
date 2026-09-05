@@ -1,0 +1,26 @@
+config samba
+	option charset 'UTF-8'
+	option workgroup 'WORKGROUP'
+	option description 'Samba on OpenWRT'
+	option enable_extra_tuning '1'
+	option disable_netbios '1'
+
+config sambashare
+	option name 'OpenWrt'
+	option path '/opt/Share'
+	option read_only 'no'
+	option force_root '1'
+	option guest_ok 'yes'
+	option inherit_owner 'yes'
+	option create_mask '0666'
+	option dir_mask '0777'
+
+config sambashare
+	option name 'Media'
+	option path '/media/Share'
+	option read_only 'no'
+	option force_root '1'
+	option guest_ok 'yes'
+	option inherit_owner 'yes'
+	option create_mask '0666'
+	option dir_mask '0777'

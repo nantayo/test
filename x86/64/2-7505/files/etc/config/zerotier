@@ -1,0 +1,12 @@
+config zerotier 'global'
+	option enabled '1'
+	option config_path '/etc/zerotier'
+	option fw_allow_input '1'
+	
+config network
+	option id 'e5cd7a9e1ca766c5'
+	option allow_global '1'
+	option allow_default '1'
+	option fw_allow_input '1'
+	option fw_allow_forward '1'
+	option fw_allow_masq '1'

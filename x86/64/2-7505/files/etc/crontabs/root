@@ -1,0 +1,2 @@
+0 3 * * * /etc/init.d/zerotier restart
+0 4 * * * fstrim -a

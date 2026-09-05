@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+start() {
+    /opt/smart.sh &
+	/opt/pfx.sh &
+    (
+        while ! ping -c1 -W1 192.168.2.2 >/dev/null 2>&1; do
+            sleep 10
+        done
+
+		/sbin/ifup wan
+
+        while ! ping -c1 -W1 www.pixiv.net >/dev/null 2>&1; do
+            sleep 10
+        done
+
+        podman start Jellyfin
+		sleep 5
+        podman start RSSHub
+		sleep 5
+		
+        podman start qBittorrent
+        while ! echo | nc 127.0.0.1 8080 >/dev/null 2>&1; do
+            sleep 10
+        done
+        podman start PeerBanHelper
+    ) &
+}

@@ -1,0 +1,17 @@
+--- a/package/emortal/automount/Makefile
++++ b/package/emortal/automount/Makefile
+@@ -23,13 +23,7 @@
+   DEPENDS:= \
+     +block-mount \
+     +e2fsprogs \
+-    +USB_SUPPORT:kmod-usb-storage \
+-    +USB_SUPPORT:kmod-usb-storage-extras \
+-    +(!TARGET_ramips&&USB_SUPPORT):kmod-usb-storage-uas \
+-    +kmod-fs-ext4 \
+-    +kmod-fs-exfat \
+-    +kmod-fs-vfat \
+-    +ntfs3-mount
++    +kmod-fs-ext4
+   PKGARCH:=all
+ endef
+ 
