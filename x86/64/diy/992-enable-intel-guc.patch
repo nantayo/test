@@ -1,0 +1,27 @@
+--- a/drivers/gpu/drm/i915/gt/uc/intel_uc.c
++++ b/drivers/gpu/drm/i915/gt/uc/intel_uc.c
+@@ -30,24 +30,6 @@
+ 	if (i915->params.enable_guc != -1)
+ 		return;
+ 
+-	/* Don't enable GuC/HuC on pre-Gen12 */
+-	if (GRAPHICS_VER(i915) < 12) {
+-		i915->params.enable_guc = 0;
+-		return;
+-	}
+-
+-	/* Don't enable GuC/HuC on older Gen12 platforms */
+-	if (IS_TIGERLAKE(i915) || IS_ROCKETLAKE(i915)) {
+-		i915->params.enable_guc = 0;
+-		return;
+-	}
+-
+-	/* Intermediate platforms are HuC authentication only */
+-	if (IS_ALDERLAKE_S(i915) && !IS_RAPTORLAKE_S(i915)) {
+-		i915->params.enable_guc = ENABLE_GUC_LOAD_HUC;
+-		return;
+-	}
+-
+ 	/* Default: enable HuC authentication and GuC submission */
+ 	i915->params.enable_guc = ENABLE_GUC_LOAD_HUC | ENABLE_GUC_SUBMISSION;
+ }

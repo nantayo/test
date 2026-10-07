@@ -1,0 +1,65 @@
+name: Get Daed's Update Information
+
+on:
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  REPO_URL: https://github.com/immortalwrt/immortalwrt
+  REPO_BRANCH: openwrt-25.12
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Initialize environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo -E apt-get -qq update > /dev/null
+        sudo -E apt-get -qq install -y $(curl -fsSL https://raw.githubusercontent.com/nantayo/My-Pkg/master/openwrt) > /dev/null
+        sudo -E apt-get -qq autoremove --purge > /dev/null
+        sudo -E apt-get -qq clean > /dev/null
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        git clone $REPO_URL -b $REPO_BRANCH --single-branch --depth=1 openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
+
+    - name: Update & Install feeds
+      working-directory: ./openwrt
+      run: |
+        ./scripts/feeds update -a
+        bash $GITHUB_WORKSPACE/x86/64/diy/diy.sh
+        sed -i 's/GO_AMD64:=v1$/GO_AMD64:=v4/' feeds/packages/lang/golang/golang-values.mk
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: Load custom config
+      run: |
+        rm -rf openwrt/files openwrt/.config
+        mv x86/64/2-7505/files x86/64/2-7505/.config openwrt/
+        chmod -R 755 openwrt
+
+    - name: Download package
+      working-directory: ./openwrt
+      run: |
+        make defconfig
+        make download -j$(( $(nproc) * 2 ))
+
+    - name: Compile Daed
+      working-directory: ./openwrt
+      run: |
+        make tools/install -j$(( $(nproc) + 1 ))
+        make toolchain/install -j$(( $(nproc) + 1 ))
+        make package/daed/compile V=s

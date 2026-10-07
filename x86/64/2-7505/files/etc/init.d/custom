@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+start() {
+    /opt/smart.sh &
+    (
+        /opt/pfx.sh
+        podman start Jellyfin
+
+        while ! ping -c1 -W1 192.168.2.2 >/dev/null 2>&1; do
+            sleep 10
+        done
+
+        retry=0
+        while [ "$retry" -lt 3 ]; do
+            /sbin/ifup wan
+            i=0
+            while [ "$i" -lt 24 ]; do
+                if ubus call network.interface.wan_6 status 2>/dev/null | jsonfilter -e '@["ipv6-prefix"][0]' >/dev/null 2>&1; then
+                    break 2
+                fi
+                i=$((i+1))
+                sleep 5
+            done
+            /sbin/ifdown wan
+            sleep 5
+            retry=$((retry+1))
+        done
+        [ "$retry" -ge 3 ] && reboot
+
+        while ! timeout 5 uclient-fetch -T 5 -O /dev/null https://www.pixiv.net/ >/dev/null 2>&1; do
+            sleep 5
+        done
+
+        podman start RSSHub
+        podman start qBittorrent
+
+        while ! timeout 2 nc 127.0.0.1 8080 </dev/null >/dev/null 2>&1; do
+            sleep 5
+        done
+
+        podman start PeerBanHelper
+    ) &
+}
