@@ -1,0 +1,73 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+FAIL_FILE=/etc/.custom_pd_fail
+
+start() {
+	(
+		/opt/smart.sh &
+		/opt/pfx.sh &
+
+		podman start Jellyfin
+		sleep 5
+
+		ok=0
+		end=$(( $(date +%s) + 120 ))
+		while [ "$(date +%s)" -lt "$end" ]; do
+			ping -c1 -W1 192.168.2.2 >/dev/null 2>&1 && { ok=1; break; }
+			sleep 5
+		done
+		[ $ok -eq 1 ] || exit 0
+
+		ok=0
+		retry=0
+		/sbin/ifup wan
+		while [ $retry -lt 3 ]; do
+			end=$(( $(date +%s) + 120 ))
+			while [ "$(date +%s)" -lt "$end" ]; do
+				ubus call network.interface.wan_6 status 2>/dev/null | grep -q '"ipv6-prefix"' && { ok=1; break 2; }
+				sleep 5
+			done
+			retry=$((retry+1))
+			[ $retry -lt 3 ] || break
+			/sbin/ifdown wan
+			sleep 5
+			/sbin/ifup wan
+		done
+		[ $ok -eq 1 ] || {
+			cnt=$(( $(cat $FAIL_FILE 2>/dev/null || echo 0) + 1 ))
+			echo $cnt > $FAIL_FILE
+			[ $cnt -le 2 ] && {
+				sync
+				reboot
+			}
+			exit 0
+		}
+		rm -f $FAIL_FILE
+
+		ok=0
+		end=$(( $(date +%s) + 120 ))
+		while [ "$(date +%s)" -lt "$end" ]; do
+			timeout 5 uclient-fetch -T 5 -O /dev/null https://www.pixiv.net/ >/dev/null 2>&1 && { ok=1; break; }
+			sleep 5
+		done
+
+		podman start RSSHub
+		sleep 5
+		podman start qBittorrent
+		sleep 5
+		podman start PeerBanHelper
+		sleep 5
+		podman start OpenCode
+	) &
+}
+
+stop() {
+	timeout 15 podman stop -t 5 OpenCode >/dev/null 2>&1
+	timeout 15 podman stop -t 5 PeerBanHelper >/dev/null 2>&1
+	timeout 25 podman stop -t 15 qBittorrent >/dev/null 2>&1
+	timeout 15 podman stop -t 5 RSSHub >/dev/null 2>&1
+	timeout 25 podman stop -t 15 Jellyfin >/dev/null 2>&1
+	timeout 15 podman stop -t 5 Mumble >/dev/null 2>&1
+}
