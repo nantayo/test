@@ -1,0 +1,12 @@
+config acme
+	option account_email 'sora1924@outlook.com'
+	option debug '0'
+
+config cert 'nantayo'
+	option enabled '1'
+	option validation_method 'dns'
+	list domains 'nantayo.v6.rocks'
+	option dns 'dns_dynv6'
+	list credentials 'DYNV6_TOKEN="zJru5ysHnNRBPpv3y4-YaxeEppZiBx"'
+	option key_type 'ec384'
+	option staging '0'

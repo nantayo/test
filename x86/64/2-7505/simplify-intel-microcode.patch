@@ -1,0 +1,11 @@
+--- a/package/firmware/intel-microcode/Makefile
++++ b/package/firmware/intel-microcode/Makefile
+@@ -46,7 +46,7 @@
+ 
+ define Package/intel-microcode/install
+ 	$(INSTALL_DIR) $(1)/lib/firmware/intel-ucode
+-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/intel-ucode-ipkg/* $(1)/lib/firmware/intel-ucode
++	$(INSTALL_DATA) $(PKG_BUILD_DIR)/intel-ucode-ipkg/06-8c-01 $(1)/lib/firmware/intel-ucode/06-8c-01
+ endef
+ 
+ $(eval $(call BuildPackage,intel-microcode))
